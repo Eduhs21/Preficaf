@@ -14,3 +14,5 @@ Desktop.ini
 # Editor
 .vscode/
 *.swp
+
+.vercel
