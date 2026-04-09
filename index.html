@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f9f7f4" />
+  <title>PrecificaFácil — Calculadora de Marketplaces</title>
+  <meta name="description" content="Descubra o preço ideal de venda em Shopee, Mercado Livre, Amazon, Shein, Magalu, Olist e TikTok Shop. Insira o custo e a margem — calculamos tudo." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap&font-display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Skip link for keyboard users -->
+  <a href="#main-content" class="skip-link">Ir para o conteúdo</a>
+
+  <!-- HEADER -->
+  <header class="header" role="banner">
+    <div class="header-inner">
+      <a href="/" class="logo" aria-label="PrecificaFácil — página inicial" translate="no">
+        <div class="logo-mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <span>PrecificaFácil</span>
+      </a>
+      <span class="header-tag" aria-label="Versão beta">Beta</span>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main id="main-content" class="main">
+
+    <!-- HERO -->
+    <section class="hero" aria-labelledby="hero-title">
+      <p class="hero-eyebrow">Calculadora de Precificação</p>
+      <h1 id="hero-title" class="hero-title">
+        Quanto cobrar<br />em cada marketplace?
+      </h1>
+      <p class="hero-subtitle">
+        Informe o custo do produto e a margem que deseja — 
+        calculamos o preço de venda certo para cada plataforma.
+      </p>
+    </section>
+
+    <!-- INPUT FORM -->
+    <section class="card input-card" aria-label="Dados para cálculo">
+
+      <div class="input-grid">
+
+        <!-- Custo -->
+        <div class="field">
+          <label for="custo" class="field-label">
+            Custo do produto
+            <span class="field-hint">Valor pago ao fornecedor</span>
+          </label>
+          <div class="input-shell" id="custo-shell">
+            <span class="input-adorn" aria-hidden="true">R$</span>
+            <input
+              type="number"
+              id="custo"
+              name="custo"
+              inputmode="decimal"
+              min="0"
+              step="0.01"
+              placeholder="0,00…"
+              autocomplete="off"
+              aria-required="true"
+              aria-describedby="custo-error"
+            />
+          </div>
+          <span class="field-error" id="custo-error" role="alert" aria-live="polite"></span>
+        </div>
+
+        <!-- Margem -->
+        <div class="field">
+          <label for="margem" class="field-label">
+            Margem de lucro desejada
+            <span class="field-hint">Percentual sobre o preço de venda</span>
+          </label>
+          <div class="input-shell">
+            <input
+              type="number"
+              id="margem"
+              name="margem"
+              inputmode="decimal"
+              min="0"
+              max="80"
+              step="0.5"
+              placeholder="20…"
+              autocomplete="off"
+              aria-describedby="margem-hint"
+            />
+            <span class="input-adorn input-adorn--right" aria-hidden="true">%</span>
+          </div>
+          <div class="slider-wrap" aria-hidden="true">
+            <input type="range" id="margem-slider" min="0" max="80" step="0.5" value="20" class="slider" tabindex="-1" />
+            <span class="slider-val" id="slider-val">20%</span>
+          </div>
+          <span id="margem-hint" class="sr-only">Ajuste com o controle deslizante ou digitando o valor</span>
+        </div>
+
+        <!-- Imposto -->
+        <div class="field">
+          <label for="imposto" class="field-label">
+            Regime tributário
+            <span class="field-hint">Alíquota sobre vendas</span>
+          </label>
+          <div class="select-shell">
+            <select id="imposto" name="imposto" autocomplete="off">
+              <option value="4">Simples Nacional — 4%</option>
+              <option value="6">Simples Nacional — 6%</option>
+              <option value="8">Simples Nacional — 8%</option>
+              <option value="0">MEI — Isento</option>
+              <option value="12">Lucro Presumido — ~12%</option>
+            </select>
+            <svg class="select-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+
+        <!-- Antecipação -->
+        <div class="field">
+          <label for="antecipacao" class="field-label">
+            Antecipação de recebíveis
+            <span class="field-hint">Taxa cobrada pelo adiantamento</span>
+          </label>
+          <div class="input-shell">
+            <input
+              type="number"
+              id="antecipacao"
+              name="antecipacao"
+              inputmode="decimal"
+              min="0"
+              max="10"
+              step="0.5"
+              placeholder="0…"
+              value="0"
+              autocomplete="off"
+            />
+            <span class="input-adorn input-adorn--right" aria-hidden="true">%</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Margem rápida -->
+      <div class="quick-row" role="group" aria-label="Atalhos de margem">
+        <span class="quick-label" aria-hidden="true">Atalho rápido:</span>
+        <div class="quick-chips">
+          <button type="button" class="chip" data-val="10" id="qbtn-10" aria-pressed="false">10%</button>
+          <button type="button" class="chip" data-val="15" id="qbtn-15" aria-pressed="false">15%</button>
+          <button type="button" class="chip chip--active" data-val="20" id="qbtn-20" aria-pressed="true">20%</button>
+          <button type="button" class="chip" data-val="25" id="qbtn-25" aria-pressed="false">25%</button>
+          <button type="button" class="chip" data-val="30" id="qbtn-30" aria-pressed="false">30%</button>
+          <button type="button" class="chip" data-val="40" id="qbtn-40" aria-pressed="false">40%</button>
+          <button type="button" class="chip" data-val="50" id="qbtn-50" aria-pressed="false">50%</button>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <button type="button" class="cta-btn" id="calcular-btn" aria-label="Calcular preço de venda para todos os marketplaces">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Calcular Preços
+      </button>
+
+    </section>
+
+    <!-- RESULTS -->
+    <section class="results-section" id="results-section" aria-label="Resultado por marketplace" hidden>
+
+      <header class="results-header">
+        <h2 class="results-title">Resultado por Marketplace</h2>
+        <p class="results-sub">
+          Custo: <strong id="res-custo"></strong> &nbsp;·&nbsp; Margem: <strong id="res-margem"></strong>
+        </p>
+      </header>
+
+      <!-- Quick overview chips -->
+      <div class="overview-strip" id="overview-strip" role="list" aria-label="Resumo de preços"></div>
+
+      <!-- Tab navigation -->
+      <nav class="tab-nav" aria-label="Selecionar marketplace" id="tab-nav"></nav>
+
+      <!-- Tab panels -->
+      <div id="tab-panels"></div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer" role="contentinfo">
+    <p>As taxas são estimativas baseadas nas médias de mercado e podem variar por categoria, plano ou negociação. Verifique sempre a política vigente de cada plataforma.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
