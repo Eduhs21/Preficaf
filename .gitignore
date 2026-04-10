@@ -4,6 +4,9 @@
 .env.local
 .env.production
 
+# Dependencies
+node_modules
+
 # Windows
 Thumbs.db
 Desktop.ini
