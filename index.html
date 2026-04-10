@@ -25,7 +25,13 @@
         </div>
         <span>PrecificaFácil</span>
       </a>
-      <span class="header-tag" aria-label="Versão beta">Beta</span>
+      <div class="header-actions">
+        <span class="header-tag" aria-label="Versão beta">Beta</span>
+        <button type="button" class="profile-btn" id="profile-btn" aria-label="Configurar perfil">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="profile-btn-text">Perfil</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -73,7 +79,7 @@
           <span class="field-error" id="custo-error" role="alert" aria-live="polite"></span>
         </div>
 
-        <!-- Margem -->
+        <!-- Margem (T2: sem slider) -->
         <div class="field">
           <label for="margem" class="field-label">
             Margem de lucro desejada
@@ -90,32 +96,42 @@
               step="0.5"
               placeholder="20…"
               autocomplete="off"
-              aria-describedby="margem-hint"
             />
             <span class="input-adorn input-adorn--right" aria-hidden="true">%</span>
           </div>
-          <div class="slider-wrap" aria-hidden="true">
-            <input type="range" id="margem-slider" min="0" max="80" step="0.5" value="20" class="slider" tabindex="-1" />
-            <span class="slider-val" id="slider-val">20%</span>
-          </div>
-          <span id="margem-hint" class="sr-only">Ajuste com o controle deslizante ou digitando o valor</span>
         </div>
 
-        <!-- Imposto -->
+        <!-- Imposto (T1: regime + alíquota lado a lado) -->
         <div class="field">
-          <label for="imposto" class="field-label">
+          <label for="regime" class="field-label">
             Regime tributário
-            <span class="field-hint">Alíquota sobre vendas</span>
+            <span class="field-hint">Selecione o regime e ajuste a alíquota</span>
           </label>
-          <div class="select-shell">
-            <select id="imposto" name="imposto" autocomplete="off">
-              <option value="4">Simples Nacional — 4%</option>
-              <option value="6">Simples Nacional — 6%</option>
-              <option value="8">Simples Nacional — 8%</option>
-              <option value="0">MEI — Isento</option>
-              <option value="12">Lucro Presumido — ~12%</option>
-            </select>
-            <svg class="select-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          <div class="field-row">
+            <div class="select-shell select-shell--half">
+              <select id="regime" name="regime" autocomplete="off" aria-label="Regime tributário">
+                <option value="simples">Simples Nacional</option>
+                <option value="mei">MEI</option>
+                <option value="presumido">Lucro Presumido</option>
+                <option value="real">Lucro Real</option>
+              </select>
+              <svg class="select-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="input-shell input-shell--half">
+              <input
+                type="number"
+                id="imposto"
+                name="imposto"
+                inputmode="decimal"
+                min="0"
+                max="50"
+                step="0.5"
+                value="4"
+                autocomplete="off"
+                aria-label="Alíquota de imposto em porcentagem"
+              />
+              <span class="input-adorn input-adorn--right" aria-hidden="true">%</span>
+            </div>
           </div>
         </div>
 
@@ -194,6 +210,44 @@
     <p>As taxas são estimativas baseadas nas médias de mercado e podem variar por categoria, plano ou negociação. Verifique sempre a política vigente de cada plataforma.</p>
   </footer>
 
+  <!-- Profile Modal (T4) -->
+  <div class="modal-overlay" id="profile-overlay" aria-hidden="true" role="presentation">
+    <aside class="modal-panel" id="profile-panel" role="dialog" aria-labelledby="profile-title" aria-modal="true">
+      <header class="modal-header">
+        <h2 id="profile-title" class="modal-title">Configurar Perfil</h2>
+        <button type="button" class="modal-close" id="profile-close" aria-label="Fechar painel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </header>
+      <div class="modal-body" id="profile-body"></div>
+      <footer class="modal-footer">
+        <button type="button" class="modal-reset-btn" id="profile-reset">Limpar perfil</button>
+        <button type="button" class="cta-btn cta-btn--modal" id="profile-save">Salvar preferências</button>
+      </footer>
+    </aside>
+  </div>
+
+  <!-- Paywall Overlay (T5) -->
+  <div class="paywall-overlay" id="paywall-overlay" aria-hidden="true" role="presentation">
+    <div class="paywall-card" role="dialog" aria-labelledby="paywall-title" aria-modal="true">
+      <div class="paywall-icon" aria-hidden="true">🔒</div>
+      <h3 id="paywall-title" class="paywall-title">Recurso PRO</h3>
+      <p class="paywall-desc">
+        <strong id="paywall-feature">Este recurso</strong> está disponível no plano PRO. 
+        Desbloqueie para otimizar ainda mais suas precificações.
+      </p>
+      <div class="paywall-benefits">
+        <div class="paywall-benefit">✓ Edição granular de taxas</div>
+        <div class="paywall-benefit">✓ Perfil personalizado de marketplaces</div>
+        <div class="paywall-benefit">✓ Exportação de resultados (em breve)</div>
+      </div>
+      <a href="checkout.html" class="cta-btn paywall-cta" id="paywall-cta-link">Seja PRO — a partir de R$ 16,58/mês</a>
+      <button type="button" class="paywall-dismiss" id="paywall-close" aria-label="Fechar">Continuar grátis</button>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="profile.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

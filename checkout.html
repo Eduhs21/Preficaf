@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f9f7f4" />
+  <title>PrecificaFácil PRO — Checkout</title>
+  <meta name="description" content="Assine o PrecificaFácil PRO e desbloqueie edição granular de taxas, perfil personalizado e exportação de resultados." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap&font-display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Skip link -->
+  <a href="#checkout-content" class="skip-link">Ir para o conteúdo</a>
+
+  <!-- HEADER -->
+  <header class="header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="logo" aria-label="PrecificaFácil — voltar para o início" translate="no">
+        <div class="logo-mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <span>PrecificaFácil</span>
+      </a>
+      <span class="header-tag header-tag--pro" aria-label="Plano PRO">PRO</span>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main id="checkout-content" class="main checkout-main">
+
+    <!-- Hero -->
+    <section class="checkout-hero" aria-labelledby="checkout-title">
+      <p class="hero-eyebrow">Plano PRO</p>
+      <h1 id="checkout-title" class="hero-title">
+        Maximize seus lucros<br />em cada marketplace
+      </h1>
+      <p class="hero-subtitle">
+        Desbloqueie ferramentas avançadas para otimizar sua precificação e aumentar sua margem de lucro.
+      </p>
+    </section>
+
+    <!-- Benefícios -->
+    <div class="checkout-benefits" aria-label="Benefícios do plano PRO">
+      <div class="checkout-benefit-item">
+        <span class="checkout-benefit-icon" aria-hidden="true">✏️</span>
+        <div>
+          <strong>Edição granular de taxas</strong>
+          <p>Ajuste taxas individuais por marketplace para simular cenários reais.</p>
+        </div>
+      </div>
+      <div class="checkout-benefit-item">
+        <span class="checkout-benefit-icon" aria-hidden="true">⚙️</span>
+        <div>
+          <strong>Perfil personalizado</strong>
+          <p>Escolha seus marketplaces e configure descontos habituais.</p>
+        </div>
+      </div>
+      <div class="checkout-benefit-item">
+        <span class="checkout-benefit-icon" aria-hidden="true">📊</span>
+        <div>
+          <strong>Exportação de resultados</strong>
+          <span class="checkout-badge-soon">Em breve</span>
+          <p>Exporte seus cálculos em PDF ou planilha.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Planos -->
+    <div class="plans-grid" role="radiogroup" aria-label="Selecionar plano">
+
+      <!-- Plano Mensal -->
+      <div class="plan-card" id="plan-monthly" role="radio" aria-checked="false" tabindex="0"
+           onclick="selectPlan('monthly')" onkeydown="if(event.key==='Enter'||event.key===' ')selectPlan('monthly')">
+        <div class="plan-header">
+          <h2 class="plan-name">Mensal</h2>
+          <p class="plan-desc">Flexibilidade total, cancele quando quiser</p>
+        </div>
+        <div class="plan-price-block">
+          <span class="plan-currency">R$</span>
+          <span class="plan-amount">29</span>
+          <span class="plan-cents">,90</span>
+          <span class="plan-period">/mês</span>
+        </div>
+        <button type="button" class="plan-cta" data-plan="monthly">
+          Selecionar mensal
+        </button>
+      </div>
+
+      <!-- Plano Anual -->
+      <div class="plan-card plan-card--featured" id="plan-yearly" role="radio" aria-checked="false" tabindex="0"
+           onclick="selectPlan('yearly')" onkeydown="if(event.key==='Enter'||event.key===' ')selectPlan('yearly')">
+        <div class="plan-badge" aria-label="Mais popular, economize 44 por cento">Mais popular — Economize 44%</div>
+        <div class="plan-header">
+          <h2 class="plan-name">Anual</h2>
+          <p class="plan-desc">Melhor custo-benefício</p>
+        </div>
+        <div class="plan-price-block">
+          <span class="plan-currency">R$</span>
+          <span class="plan-amount">16</span>
+          <span class="plan-cents">,58</span>
+          <span class="plan-period">/mês</span>
+        </div>
+        <p class="plan-total">Total: R$ 199,00/ano</p>
+        <button type="button" class="plan-cta plan-cta--featured" data-plan="yearly">
+          Selecionar anual
+        </button>
+      </div>
+    </div>
+
+    <!-- Formulário de checkout -->
+    <section class="checkout-form-section card" id="checkout-form" aria-label="Formulário de assinatura" style="display:none;">
+      <h2 class="checkout-form-title" id="checkout-plan-title">Plano selecionado</h2>
+      <div class="field">
+        <label for="checkout-email" class="field-label">
+          Seu e-mail
+          <span class="field-hint">Usado para acessar sua conta PRO</span>
+        </label>
+        <div class="input-shell" id="email-shell">
+          <span class="input-adorn" aria-hidden="true">@</span>
+          <input
+            type="email"
+            id="checkout-email"
+            name="email"
+            placeholder="voce@email.com"
+            autocomplete="email"
+            aria-required="true"
+          />
+        </div>
+        <span class="field-error" id="email-error" role="alert" aria-live="polite"></span>
+      </div>
+      <button type="button" class="cta-btn" id="checkout-submit" style="margin-top:20px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Assinar agora
+      </button>
+      <p class="checkout-disclaimer">Pagamento seguro via Stripe. Você será redirecionado para finalizar o pagamento.</p>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer" role="contentinfo">
+    <p>Pagamento seguro e criptografado. Cancele a qualquer momento sem compromisso.</p>
+  </footer>
+
+  <script>
+    'use strict';
+
+    var selectedPlan = null;
+
+    function selectPlan(plan) {
+      selectedPlan = plan;
+
+      // Atualiza seleção visual
+      document.querySelectorAll('.plan-card').forEach(function(c) {
+        c.classList.remove('plan-card--selected');
+        c.setAttribute('aria-checked', 'false');
+      });
+      var card = document.getElementById('plan-' + plan);
+      card.classList.add('plan-card--selected');
+      card.setAttribute('aria-checked', 'true');
+
+      // Mostra formulário
+      var form = document.getElementById('checkout-form');
+      form.style.display = '';
+      var title = document.getElementById('checkout-plan-title');
+      title.textContent = plan === 'yearly'
+        ? 'Plano Anual — R$ 199,00/ano'
+        : 'Plano Mensal — R$ 29,90/mês';
+
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    document.getElementById('checkout-submit').addEventListener('click', function() {
+      var email = document.getElementById('checkout-email').value.trim();
+      var errorEl = document.getElementById('email-error');
+      var shell = document.getElementById('email-shell');
+
+      if (!email || !email.includes('@')) {
+        errorEl.textContent = 'Por favor, insira um e-mail válido.';
+        shell.classList.add('has-error');
+        document.getElementById('checkout-email').focus();
+        return;
+      }
+
+      errorEl.textContent = '';
+      shell.classList.remove('has-error');
+
+      // ============================================================
+      // TODO: Substituir por URL real de checkout Stripe/Hotmart
+      // Em produção, redirecionar para:
+      // var checkoutUrls = {
+      //   monthly: 'https://checkout.stripe.com/seu-produto-mensal',
+      //   yearly: 'https://checkout.stripe.com/seu-produto-anual'
+      // };
+      // window.location.href = checkoutUrls[selectedPlan] + '?email=' + encodeURIComponent(email);
+      // ============================================================
+
+      // MVP: Ativação direta para demonstração
+      var AUTH_KEY = 'precifica_auth';
+      var now = new Date();
+      var validUntil;
+
+      if (selectedPlan === 'yearly') {
+        validUntil = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+      } else {
+        validUntil = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+      }
+
+      localStorage.setItem(AUTH_KEY, JSON.stringify({
+        email: email,
+        plan: selectedPlan,
+        validUntil: validUntil.toISOString()
+      }));
+
+      // Redireciona para a aplicação principal
+      window.location.href = 'index.html';
+    });
+
+    // Enter key no campo de email submete
+    document.getElementById('checkout-email').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('checkout-submit').click();
+    });
+  </script>
+
+</body>
+</html>

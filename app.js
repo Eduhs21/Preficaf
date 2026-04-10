@@ -86,6 +86,11 @@ const fmt = (v) => fmtBRL.format(v);
 const pct = (v) => fmtPct.format(v / 100);
 
 // ================================================================
+// T1: REGIME DEFAULTS — alíquota padrão por regime tributário
+// ================================================================
+const REGIME_DEFAULTS = { simples: 4, mei: 0, presumido: 12, real: 15 };
+
+// ================================================================
 // CALCULATION ENGINE
 // Formula: PrecoVenda = (Custo + TaxaFixa) / (1 - TotalPct)
 // Where TotalPct = all % fees + imposto + antecip + margemDesejada
@@ -193,10 +198,111 @@ function renderCard(mp, res) {
 }
 
 // ================================================================
-// RENDER RESULTS
+// T3: DETAIL CARD (extracted for re-rendering on fee edits)
+// ================================================================
+function renderDetailCard(mp, res, margem) {
+  if (!res) return '';
+  return `
+    <article class="result-card" style="--card-color:${mp.color}" aria-label="Detalhamento completo — ${mp.name}">
+      <h3 style="font-size:.875rem;font-weight:700;color:var(--text-2);margin-bottom:14px;">Detalhamento Completo</h3>
+      <div class="rows" role="list">
+        ${rowHtml('#52b788', 'Preço de venda', fmt(res.precoVenda), 'pos')}
+        ${rowHtml('#52b788', 'Repasse (o que você recebe)', fmt(res.repasse), 'pos')}
+        ${rowHtml('#e07070', 'Total de deduções', fmt(res.totalDed), 'neg')}
+        ${rowHtml('#52b788', 'Lucro líquido', fmt(res.lucro), 'pos')}
+        <div class="row row-total" role="listitem">
+          <span class="row-lbl" style="font-weight:700;color:var(--text-2)">Margem real</span>
+          <span class="row-amt pill-${qualClass(res.margemReal)}">${pct(res.margemReal)}</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:12px 14px;background:var(--accent-bg);border-radius:var(--r-md);font-size:.82rem;color:var(--text-2);line-height:1.65;border-left:3px solid var(--accent-mid)">
+        <strong>Como usar:</strong> Venda por <strong>${fmt(res.precoVenda)}</strong> para garantir ${pct(margem)} de margem sobre as taxas da plataforma.
+        ${res.cupom > 0 ? `<br>Dica: com cupom, considere subir o preço anunciado em ${pct(mp.fees.cupomPct * 100)} para manter a margem.` : ''}
+      </div>
+    </article>`;
+}
+
+// ================================================================
+// T3: EDITABLE FEES for individual marketplace panels
+// ================================================================
+function renderEditableFields(mp) {
+  const F = mp.fees;
+  const fields = [
+    { key: 'cupomPct', label: 'Cupom / Desconto', value: (F.cupomPct * 100).toFixed(1), suffix: '%' },
+    { key: 'taxaPct', label: 'Taxa ' + mp.name, value: (F.taxaPct * 100).toFixed(1), suffix: '%' },
+    { key: 'taxaFixa', label: 'Taxa fixa', value: F.taxaFixa.toFixed(2), suffix: 'R$' },
+    { key: 'comissaoPct', label: 'Comissão', value: (F.comissaoPct * 100).toFixed(1), suffix: '%' },
+    { key: 'antecipPct', label: 'Antecipação', value: (F.antecipPct * 100).toFixed(1), suffix: '%' },
+  ];
+
+  const isPro = isSubscribed();
+
+  return `
+    <div class="editable-fees-wrapper ${isPro ? '' : 'pro-locked'}">
+      <div class="editable-fees" data-mp="${mp.id}">
+        <h4 class="edit-fees-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Ajustar taxas
+        </h4>
+        ${fields.map(f => `
+          <div class="edit-fee-row">
+            <label class="edit-fee-label">${f.label}</label>
+            <div class="edit-fee-input-wrap">
+              <input type="number" class="edit-fee-input"
+                data-mp="${mp.id}" data-key="${f.key}"
+                value="${f.value}" step="0.1" min="0"
+                aria-label="${f.label} para ${mp.name}"
+                ${isPro ? '' : 'tabindex="-1"'} />
+              <span class="edit-fee-suffix">${f.suffix}</span>
+            </div>
+          </div>
+        `).join('')}
+        <button type="button" class="reset-fees-btn" data-mp="${mp.id}"
+          aria-label="Restaurar taxas padrão de ${mp.name}" ${isPro ? '' : 'tabindex="-1"'}>
+          ↺ Restaurar padrões
+        </button>
+      </div>
+      ${isPro ? '' : `
+        <div class="pro-overlay" role="button" tabindex="0" aria-label="Desbloquear edição de taxas"
+          onclick="requirePro('Edição de taxas')" onkeydown="if(event.key==='Enter')requirePro('Edição de taxas')">
+          <div class="pro-overlay-content">
+            <span class="pro-overlay-icon" aria-hidden="true">🔒</span>
+            <span class="pro-overlay-text">Recurso PRO</span>
+            <span class="pro-overlay-btn-text">Clique para desbloquear</span>
+          </div>
+        </div>
+      `}
+    </div>`;
+}
+
+// ================================================================
+// STORE LAST CALC PARAMS — needed for T3 per-marketplace recalc
+// ================================================================
+let lastCalcParams = null;
+
+// ================================================================
+// RENDER RESULTS (T3: containers + T4: profile filter)
 // ================================================================
 function renderResults(custo, margem, impostoPct, antecipExtra) {
-  const data = MARKETPLACES.map(mp => ({ mp, res: calculate(custo, margem, impostoPct, antecipExtra, mp) }));
+  lastCalcParams = { custo, margem, impostoPct, antecipExtra };
+
+  // T4: filter by profile + apply profile discounts
+  const activeMPs = getActiveMarketplaces(MARKETPLACES);
+  const data = activeMPs.map(mp => {
+    const profileDiscount = getProfileDiscount(mp.id);
+    let effectiveMp = mp;
+    if (profileDiscount !== null) {
+      effectiveMp = {
+        ...mp,
+        fees: { ...mp.fees, cupomPct: profileDiscount / 100 }
+      };
+    }
+    return {
+      mp: effectiveMp,
+      originalMp: mp,
+      res: calculate(custo, margem, impostoPct, antecipExtra, effectiveMp)
+    };
+  });
 
   // Update summary text
   document.getElementById('res-custo').textContent = fmt(custo);
@@ -223,7 +329,7 @@ function renderResults(custo, margem, impostoPct, antecipExtra) {
   }).join('');
 
   // Tab nav & panels
-  const tabList = [{ id: 'todos', name: 'Todos', emoji: '⚡' }, ...MARKETPLACES];
+  const tabList = [{ id: 'todos', name: 'Todos', emoji: '⚡' }, ...activeMPs];
   const nav = document.getElementById('tab-nav');
   nav.innerHTML = tabList.map((mp, i) => `
     <button
@@ -250,28 +356,12 @@ function renderResults(custo, margem, impostoPct, antecipExtra) {
       ${todosCards}
     </div>`;
 
-  // Individual panels (two-col: card + detail)
+  // Individual panels (T3: card + detail + editable fees)
   const individualPanels = data.map(({ mp, res }) => `
     <div class="tab-panel" id="panel-${mp.id}" role="tabpanel" aria-labelledby="tab-${mp.id}" aria-hidden="true">
-      ${renderCard(mp, res)}
-      ${res ? `
-      <article class="result-card" style="--card-color:${mp.color}" aria-label="Detalhamento completo — ${mp.name}">
-        <h3 style="font-size:.875rem;font-weight:700;color:var(--text-2);margin-bottom:14px;">Detalhamento Completo</h3>
-        <div class="rows" role="list">
-          ${rowHtml('#52b788', 'Preço de venda', fmt(res.precoVenda), 'pos')}
-          ${rowHtml('#52b788', 'Repasse (o que você recebe)', fmt(res.repasse), 'pos')}
-          ${rowHtml('#e07070', 'Total de deduções', fmt(res.totalDed), 'neg')}
-          ${rowHtml('#52b788', 'Lucro líquido', fmt(res.lucro), 'pos')}
-          <div class="row row-total" role="listitem">
-            <span class="row-lbl" style="font-weight:700;color:var(--text-2)">Margem real</span>
-            <span class="row-amt pill-${qualClass(res.margemReal)}">${pct(res.margemReal)}</span>
-          </div>
-        </div>
-        <div style="margin-top:16px;padding:12px 14px;background:var(--accent-bg);border-radius:var(--r-md);font-size:.82rem;color:var(--text-2);line-height:1.65;border-left:3px solid var(--accent-mid)">
-          <strong>Como usar:</strong> Venda por <strong>${fmt(res.precoVenda)}</strong> para garantir ${pct(margem)} de margem sobre as taxas da plataforma.
-          ${res.cupom > 0 ? `<br>Dica: com cupom, considere subir o preço anunciado em ${pct(mp.fees.cupomPct * 100)} para manter a margem.` : ''}
-        </div>
-      </article>` : ''}
+      <div class="mp-card-container">${renderCard(mp, res)}</div>
+      ${res ? `<div class="mp-detail-container">${renderDetailCard(mp, res, margem)}</div>` : ''}
+      <div class="mp-edit-container">${renderEditableFields(mp)}</div>
     </div>`).join('');
 
   panels.innerHTML = todosPanel + individualPanels;
@@ -302,22 +392,14 @@ window.switchTab = function(id) {
 };
 
 // ================================================================
-// SLIDER ↔ INPUT SYNC
+// T2: MARGIN SYNC — simplified (no slider)
 // ================================================================
 const margemInput = document.getElementById('margem');
-const slider      = document.getElementById('margem-slider');
-const sliderVal   = document.getElementById('slider-val');
 const chips       = document.querySelectorAll('.chip');
 
 function setMargem(val) {
   const v = Math.min(80, Math.max(0, parseFloat(val) || 0));
   margemInput.value = v;
-  slider.value = v;
-  sliderVal.textContent = v + '%';
-
-  // Update slider track fill via inline style
-  const pctFill = (v / 80) * 100;
-  slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pctFill}%, var(--border) ${pctFill}%, var(--border) 100%)`;
 
   // Update chip states
   chips.forEach(c => {
@@ -327,12 +409,108 @@ function setMargem(val) {
   });
 }
 
-slider.addEventListener('input', () => setMargem(slider.value));
 margemInput.addEventListener('input', () => setMargem(margemInput.value));
 chips.forEach(c => c.addEventListener('click', () => setMargem(c.dataset.val)));
 
 // Init
 setMargem(20);
+
+// ================================================================
+// T1: REGIME → ALÍQUOTA auto-fill
+// ================================================================
+const regimeSelect = document.getElementById('regime');
+const impostoInput = document.getElementById('imposto');
+
+regimeSelect.addEventListener('change', () => {
+  impostoInput.value = REGIME_DEFAULTS[regimeSelect.value];
+});
+
+// ================================================================
+// T3: EVENT DELEGATION — editable fees recalc
+// ================================================================
+const tabPanelsEl = document.getElementById('tab-panels');
+
+tabPanelsEl.addEventListener('input', function(e) {
+  if (!e.target.classList.contains('edit-fee-input')) return;
+  recalcSingleMarketplace(e.target.dataset.mp);
+});
+
+tabPanelsEl.addEventListener('click', function(e) {
+  const btn = e.target.closest('.reset-fees-btn');
+  if (!btn) return;
+  resetMarketplaceFees(btn.dataset.mp);
+});
+
+/**
+ * Recalculates a single marketplace based on its editable fee inputs
+ */
+function recalcSingleMarketplace(mpId) {
+  if (!lastCalcParams) return;
+  const mp = MARKETPLACES.find(m => m.id === mpId);
+  if (!mp) return;
+
+  const panel = document.getElementById('panel-' + mpId);
+  if (!panel) return;
+
+  // Read overridden fees from inputs
+  const inputs = panel.querySelectorAll('.edit-fee-input');
+  const overriddenFees = {};
+  // Start with original fees
+  Object.keys(mp.fees).forEach(k => { overriddenFees[k] = mp.fees[k]; });
+
+  inputs.forEach(inp => {
+    const key = inp.dataset.key;
+    const val = parseFloat(inp.value) || 0;
+    if (key === 'taxaFixa') {
+      overriddenFees[key] = val;
+    } else {
+      overriddenFees[key] = val / 100; // Convert % to decimal
+    }
+  });
+
+  const tempMp = { id: mp.id, name: mp.name, emoji: mp.emoji, color: mp.color, desc: mp.desc, fees: overriddenFees };
+  const { custo, margem, impostoPct, antecipExtra } = lastCalcParams;
+  const res = calculate(custo, margem, impostoPct, antecipExtra, tempMp);
+
+  // Re-render card and detail (not the editable fields)
+  const cardContainer = panel.querySelector('.mp-card-container');
+  const detailContainer = panel.querySelector('.mp-detail-container');
+
+  if (cardContainer) cardContainer.innerHTML = renderCard(tempMp, res);
+  if (detailContainer) {
+    detailContainer.innerHTML = renderDetailCard(tempMp, res, margem);
+  } else if (res) {
+    // Create detail container if it didn't exist (was inviable before)
+    const editContainer = panel.querySelector('.mp-edit-container');
+    const newDetail = document.createElement('div');
+    newDetail.className = 'mp-detail-container';
+    newDetail.innerHTML = renderDetailCard(tempMp, res, margem);
+    panel.insertBefore(newDetail, editContainer);
+  }
+}
+
+/**
+ * Resets marketplace fees back to original config values
+ */
+function resetMarketplaceFees(mpId) {
+  const mp = MARKETPLACES.find(m => m.id === mpId);
+  if (!mp) return;
+
+  const panel = document.getElementById('panel-' + mpId);
+  if (!panel) return;
+
+  const inputs = panel.querySelectorAll('.edit-fee-input');
+  inputs.forEach(inp => {
+    const key = inp.dataset.key;
+    if (key === 'taxaFixa') {
+      inp.value = mp.fees[key].toFixed(2);
+    } else {
+      inp.value = (mp.fees[key] * 100).toFixed(1);
+    }
+  });
+
+  recalcSingleMarketplace(mpId);
+}
 
 // ================================================================
 // CALCULATE — main handler
@@ -376,7 +554,47 @@ function doCalc() {
 
 calcBtn.addEventListener('click', doCalc);
 
-// Enter key on any input triggers calc
-document.querySelectorAll('input, select').forEach(el => {
+// Enter key on input-card inputs triggers calc
+document.querySelectorAll('.input-card input, .input-card select').forEach(el => {
   el.addEventListener('keydown', e => { if (e.key === 'Enter') doCalc(); });
+});
+
+// ================================================================
+// T4: PROFILE MODAL HANDLERS
+// ================================================================
+document.getElementById('profile-btn').addEventListener('click', () => {
+  if (!requirePro('Configurações de perfil')) return;
+  openProfileModal(MARKETPLACES);
+});
+
+document.getElementById('profile-close').addEventListener('click', closeProfileModal);
+
+document.getElementById('profile-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'profile-overlay') closeProfileModal();
+});
+
+document.getElementById('profile-save').addEventListener('click', () => {
+  const data = getProfileFromForm();
+  saveProfileData(data);
+  closeProfileModal();
+
+  // Se resultados estão visíveis, recalcula com novo perfil
+  if (!document.getElementById('results-section').hidden) {
+    doCalc();
+  }
+});
+
+document.getElementById('profile-reset').addEventListener('click', () => {
+  clearProfile();
+  renderProfileBody(MARKETPLACES);
+});
+
+// Escape para fechar modais
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const profileOverlay = document.getElementById('profile-overlay');
+    if (profileOverlay.classList.contains('modal--visible')) {
+      closeProfileModal();
+    }
+  }
 });
