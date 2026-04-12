@@ -1,31 +1,3 @@
-window.addEventListener('load', async () => {
-  if (!window.Clerk) return;
-  await window.Clerk.load();
-  renderAuthArea(window.Clerk.user);
-});
-
-function renderAuthArea(user) {
-  const area = document.getElementById('auth-area');
-  if (!area) return;
-  if (user) {
-    const email = user.emailAddresses[0]?.emailAddress ?? '';
-    area.innerHTML = `
-      <span class="auth-email">${email}</span>
-      <button class="auth-btn"
-        onclick="window.Clerk.signOut().then(()=>location.reload())">
-        Sair
-      </button>
-    `;
-  } else {
-    area.innerHTML = `
-      <button class="auth-btn"
-        onclick="window.Clerk.openSignIn()">Entrar</button>
-      <button class="auth-btn auth-btn--pro"
-        onclick="location.href='/checkout.html'">Seja PRO</button>
-    `;
-  }
-}
-
 async function getClerkToken() {
   return await window.Clerk?.session?.getToken() ?? null;
 }
