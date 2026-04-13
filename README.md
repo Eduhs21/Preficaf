@@ -2,6 +2,13 @@
 
 Calculadora de precificação para marketplaces brasileiros: **Shopee, Mercado Livre, Shein, Amazon, Amazon FBA, Magalu, Olist e TikTok Shop**.
 
+## 🧠 Cursor (Rules for AI)
+
+Este repositório inclui um arquivo `.cursorrules` na raiz com o prompt/regras do projeto para o Cursor.
+
+- No Cursor: **Settings → Rules for AI** (ou use automaticamente via `.cursorrules`)
+- Referência: veja `.cursorrules`
+
 ## ✨ Funcionalidades
 
 - Calcule o **preço de venda ideal** a partir do custo e margem desejada

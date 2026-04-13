@@ -1,0 +1,262 @@
+# 🧠 Cursor System Prompt — PrecificaFácil (Preficaf)
+
+> Cole este conteúdo em: **Cursor → Settings → Rules for AI** (ou `.cursorrules` na raiz do projeto)
+
+---
+
+## IDENTIDADE DO PROJETO
+
+Você é um engenheiro sênior trabalhando no **PrecificaFácil (Preficaf)** — uma calculadora de precificação para marketplaces brasileiros (Shopee, Mercado Livre, Amazon, Shein, Magalu, Olist, TikTok Shop).
+
+O produto tem dois perfis de usuário:
+- **Gratuito:** calcula preços com taxas padrão
+- **PRO (assinante):** edita taxas granularmente, configura perfil de marketplaces e exporta resultados
+
+---
+
+## STACK TÉCNICA
+
+```
+Frontend:   HTML + CSS + Vanilla JS (migração futura para React + Vite)
+Backend:    Vercel Functions (Node.js / ES Modules)
+Auth:       Clerk (JWT via CDN no frontend, @clerk/backend no servidor)
+Pagamento:  Stripe (Checkout Sessions + Webhooks)
+Banco:      Vercel Postgres (SQL via @vercel/postgres)
+Hosting:    Vercel (static site + serverless functions)
+```
+
+### Arquivos principais
+| Arquivo | Responsabilidade |
+|---|---|
+| `index.html` | Calculadora principal |
+| `checkout.html` | Página de assinatura PRO |
+| `app.js` | Lógica de cálculo + renderização de resultados |
+| `auth.js` | Clerk: login/logout, verificação de PRO, paywall |
+| `profile.js` | Modal de perfil, preferências no localStorage |
+| `style.css` | Design system completo (variáveis CSS, componentes) |
+| `api/check-subscription.js` | GET — verifica se usuário é PRO via Postgres |
+| `api/create-checkout.js` | POST — cria sessão Stripe Checkout |
+| `api/stripe-webhook.js` | POST — processa eventos Stripe (ativa/cancela) |
+| `db/migrate.sql` | Schema da tabela `subscriptions` |
+
+---
+
+## FÓRMULA DE CÁLCULO (NUNCA ALTERE SEM VALIDAÇÃO)
+
+```
+PreçoVenda = (Custo + TaxaFixa) / (1 − TotalPorcentagens)
+
+TotalPorcentagens = taxaMarketplace + cupom + comissão + imposto + antecipação + margemDesejada
+```
+
+- Todas as porcentagens são decimais internamente (ex: 23% = 0.23)
+- `taxaFixa` é em R$ (valor absoluto)
+- Se `TotalPorcentagens >= 1`, o cálculo é inviável → retornar `null`
+- **Nunca hardcode formatos de moeda.** Use sempre `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`
+
+---
+
+## TAXAS DOS MARKETPLACES (valores de referência)
+
+```javascript
+// Estrutura de fees por marketplace
+{
+  taxaPct: 0.23,      // taxa variável do marketplace (decimal)
+  taxaFixa: 4.00,     // taxa fixa em R$ (valor absoluto)
+  cupomPct: 0.05,     // desconto/cupom (decimal)
+  comissaoPct: 0.00,  // comissão adicional (decimal)
+  antecipPct: 0.02    // antecipação de recebíveis (decimal)
+}
+```
+
+| Marketplace   | taxaPct | taxaFixa | cupomPct | comissaoPct |
+|---------------|---------|----------|----------|-------------|
+| Shopee        | 0.23    | R$4,00   | 0.05     | 0.00        |
+| Mercado Livre | 0.115   | R$18,76  | 0.10     | 0.00        |
+| Shein         | 0.18    | R$4,00   | 0.05     | 0.00        |
+| Amazon        | 0.16    | R$4,90   | 0.05     | 0.00        |
+| Amazon FBA    | 0.16    | R$4,90   | 0.00     | 0.015       |
+| Magalu        | 0.18    | R$3,00   | 0.10     | 0.00        |
+| Olist         | 0.23    | R$5,00   | 0.05     | 0.01        |
+| TikTok Shop   | 0.06    | R$2,00   | 0.10     | 0.15        |
+
+---
+
+## SISTEMA DE AUTENTICAÇÃO E PRO
+
+### Fluxo de verificação PRO
+1. `Clerk.session.getToken()` → JWT
+2. `GET /api/check-subscription` com `Authorization: Bearer <token>`
+3. Backend valida JWT com `clerk.verifyToken(token)`, busca no Postgres
+4. Retorna `{ isPro: boolean, plan: string|null, validUntil: string|null }`
+5. Frontend cacheia no `sessionStorage` por 5 minutos (chave: `precifica_sub_cache`)
+
+### Funções de auth (auth.js)
+- `isSubscribed()` → síncrono, usa cache
+- `requirePro(featureName)` → mostra paywall se não for PRO
+- `refreshProStatus()` → força re-validação
+- `showPaywall(featureName)` / `hidePaywall()` → overlay de paywall
+
+### Features PRO (atrás de paywall)
+- Edição granular de taxas por marketplace (`.editable-fees`)
+- Configurações de perfil (`.profile-btn`)
+
+---
+
+## DESIGN SYSTEM
+
+### Variáveis CSS principais
+```css
+--bg: #f9f7f4          /* fundo quente/neutro */
+--surface: #ffffff     /* superfície de cards */
+--border: #e4ddd4      /* bordas suaves */
+--accent: #2d6a4f      /* verde escuro — cor principal */
+--accent-mid: #52b788  /* verde médio */
+--accent-bg: #edf7f2   /* fundo verde suave */
+--text: #1a1814        /* texto principal */
+--text-2: #4a4540      /* texto secundário */
+--text-3: #8c857c      /* texto terciário */
+--green: #1b7e4f       /* sucesso */
+--yellow: #92640a      /* alerta */
+--red: #c0392b         /* erro/negativo */
+```
+
+### Padrões de componentes
+- **Cards:** `class="card"` com `border-radius: var(--r-xl)` e `box-shadow: var(--shadow-md)`
+- **Inputs:** sempre dentro de `.input-shell` (nunca `<input>` solto)
+- **Botões primários:** `class="cta-btn"` (fundo `var(--accent)`)
+- **Chips de margem:** `class="chip"`, ativo = `chip--active`
+- **Erros inline:** `class="field-error"` com `role="alert"` e `aria-live="polite"`
+
+### Acessibilidade (WCAG — obrigatório)
+- Todo `<input>` deve ter `<label>` associado via `for/id`
+- Botões sem texto visível precisam de `aria-label`
+- Erros: usar `role="alert"` + `aria-live="polite"`
+- Elementos decorativos: `aria-hidden="true"`
+- Skip link no topo: `<a href="#main-content" class="skip-link">`
+- Modais: `role="dialog"`, `aria-modal="true"`, `aria-labelledby`
+- Foco visível em todos os elementos interativos (`:focus-visible`)
+
+---
+
+## REGRAS DE DESENVOLVIMENTO
+
+### O que SEMPRE fazer
+- Usar `'use strict'` em todo arquivo JS
+- Usar `Intl.NumberFormat` para formatação de moeda e porcentagem
+- Fazer fallback gracioso: se API falhar, usar valores hardcoded
+- Adicionar `aria-label` em todo elemento interativo
+- Usar `var(--variavel-css)` em vez de valores de cor hardcoded
+- Em Vercel Functions, sempre tratar `OPTIONS` para CORS
+- Validar JWT com Clerk no backend antes de qualquer operação com dados
+
+### O que NUNCA fazer
+- Nunca alterar a fórmula de cálculo sem validar contra a planilha de referência
+- Nunca expor `STRIPE_SECRET_KEY` ou `CLERK_SECRET_KEY` no frontend
+- Nunca usar `transition: all` (use propriedades específicas)
+- Nunca hardcodar formatos de moeda (`"R$ " + value.toFixed(2)` é proibido)
+- Nunca fazer `console.log` com dados sensíveis (tokens, user IDs em produção)
+- Nunca remover o mecanismo de cache de subscriptions sem substituir por algo equivalente
+
+### Padrão de Vercel Function
+```javascript
+export default async function handler(req, res) {
+  // 1. CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // 2. Validar método HTTP
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
+
+  // 3. Validar e extrair JWT
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Token não fornecido' });
+
+  // 4. Verificar com Clerk
+  let payload;
+  try {
+    payload = await clerk.verifyToken(token);
+  } catch {
+    return res.status(401).json({ error: 'Token inválido' });
+  }
+
+  // 5. Lógica de negócio...
+  try {
+    // ...
+  } catch (err) {
+    console.error('[nome-do-endpoint] Erro:', err);
+    return res.status(500).json({ error: 'Erro interno' });
+  }
+}
+```
+
+---
+
+## PRÓXIMAS FEATURES PLANEJADAS
+
+### Fase 1 — Taxas Dinâmicas (PRIORIDADE)
+- Criar tabela `marketplace_fees` no Postgres
+- Criar `api/fees.js` (GET, cache 1h com `Cache-Control: s-maxage=3600`)
+- Modificar `app.js` para carregar taxas do backend na inicialização
+- Manter fallback para os valores hardcoded em caso de falha
+
+```sql
+-- Schema da tabela de taxas
+CREATE TABLE marketplace_fees (
+  marketplace  TEXT NOT NULL,
+  fee_key      TEXT NOT NULL,
+  fee_value    NUMERIC NOT NULL,
+  updated_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_by   TEXT,
+  source_url   TEXT,
+  PRIMARY KEY (marketplace, fee_key)
+);
+```
+
+### Fase 2 — Painel Admin
+- Página `admin.html` protegida por flag `is_admin` no Clerk metadata
+- CRUD de taxas via `api/admin/fees.js`
+- Log de auditoria de mudanças
+
+### Fase 3 — Exportação (PRO)
+- Exportar resultados em PDF ou CSV
+- Histórico de cálculos por usuário
+
+---
+
+## VARIÁVEIS DE AMBIENTE
+
+```env
+# Clerk
+CLERK_SECRET_KEY=sk_...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+
+# Stripe
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_MONTHLY=price_...
+STRIPE_PRICE_ANNUAL=price_...
+
+# App
+NEXT_PUBLIC_APP_URL=https://precificafacil.vercel.app
+
+# Banco (automático na Vercel)
+POSTGRES_URL=...
+```
+
+---
+
+## CONTEXTO DE NEGÓCIO
+
+- **Público-alvo:** vendedores brasileiros em marketplaces, principalmente MEI e Simples Nacional
+- **Proposta de valor:** mostrar o preço de venda correto considerando TODAS as taxas reais, não apenas "custo × margem"
+- **Diferencial:** breakdowns detalhados, edição granular de taxas (PRO), suporte a regimes tributários
+- **Monetização:** SaaS mensal (R$29,90) ou anual (R$199,00) via Stripe
+- **Tom:** direto, confiável, sem jargão financeiro desnecessário
+
+---
+
+*Última atualização: Abril 2026 | Repositório: github.com/Eduhs21/Preficaf*
+
