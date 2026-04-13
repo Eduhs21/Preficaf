@@ -239,32 +239,54 @@ document.addEventListener('DOMContentLoaded', function() {
 // ================================================================
 // CLERK INITIALIZATION
 // ================================================================
-window.addEventListener('load', async function() {
+let _clerkInitStarted = false;
+
+async function initClerkOnce() {
+  if (_clerkInitStarted) return;
+  if (!window.Clerk) return;
+  _clerkInitStarted = true;
+
   try {
-    // Aguardar carregamento do Clerk
-    if (window.Clerk) {
-      await window.Clerk.load();
+    await window.Clerk.load();
 
-      // Renderizar UI de auth no header
+    // Renderizar UI de auth no header
+    renderAuthArea();
+
+    // Se logado, verificar status PRO em background
+    if (window.Clerk.user) {
+      refreshProStatus();
+    }
+
+    // Listener para mudanças de estado de autenticação
+    window.Clerk.addListener(function() {
       renderAuthArea();
-
-      // Se logado, verificar status PRO em background
       if (window.Clerk.user) {
         refreshProStatus();
+      } else {
+        clearSubscriptionCache();
+        _isProCached = false;
       }
-
-      // Listener para mudanças de estado de autenticação
-      window.Clerk.addListener(function() {
-        renderAuthArea();
-        if (window.Clerk.user) {
-          refreshProStatus();
-        } else {
-          clearSubscriptionCache();
-          _isProCached = false;
-        }
-      });
-    }
+    });
   } catch (err) {
-    console.error('[auth] Erro ao carregar Clerk:', err);
+    _clerkInitStarted = false;
+    console.error('[auth] Erro ao inicializar Clerk:', err);
   }
+}
+
+// Exposto para o loader (clerk-loader.js) chamar assim que o script terminar de carregar
+window.__initClerk = function () {
+  initClerkOnce();
+};
+
+// Fallback: caso o Clerk demore para aparecer (script async / rede lenta)
+window.addEventListener('load', function () {
+  initClerkOnce();
+
+  let tries = 0;
+  const maxTries = 40; // ~10s
+  const timer = setInterval(function () {
+    tries += 1;
+    initClerkOnce();
+    if (_clerkInitStarted || tries >= maxTries) clearInterval(timer);
+  }, 250);
 });
