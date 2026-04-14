@@ -7,7 +7,7 @@
 'use strict';
 
 (function () {
-  const CLERK_SRC = 'https://cdn.clerk.com/npm/@clerk/clerk-js@latest/dist/clerk.browser.js';
+  const CLERK_SRC = 'https://probable-catfish-21.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js';
 
   async function getPublishableKey() {
     try {
