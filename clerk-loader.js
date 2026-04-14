@@ -7,7 +7,7 @@
 'use strict';
 
 (function () {
-  const CLERK_SRC = 'https://cdn.clerk.io/npm/@clerk/clerk-js@latest/dist/clerk.browser.js';
+  const CLERK_SRC = 'https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js';
 
   async function getPublishableKey() {
     try {
