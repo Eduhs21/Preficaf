@@ -41,10 +41,12 @@
     script.crossOrigin = 'anonymous';
     script.setAttribute('data-clerk-publishable-key', publishableKey);
     script.onload = function () {
+      console.log('[clerk-loader] Script carregado com sucesso. Inicializando...');
       if (typeof window.__initClerk === 'function') window.__initClerk();
     };
-    script.onerror = function () {
-      console.warn('[clerk-loader] Falha ao carregar Clerk CDN.');
+    script.onerror = function (err) {
+      console.error('[clerk-loader] FALHA CRÍTICA: Não foi possível carregar o Clerk JS do CDN.', err);
+      console.error('[clerk-loader] URL tentada:', CLERK_SRC);
     };
     document.head.appendChild(script);
   }
