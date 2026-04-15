@@ -167,31 +167,8 @@
 
     var isProcessing = false;
 
-    // ============================================================
-    // Renderiza auth area no checkout (igual ao index)
-    // ============================================================
-    function renderCheckoutAuthArea() {
-      var area = document.getElementById('auth-area');
-      if (!area || !window.Clerk) return;
-
-      var user = window.Clerk.user;
-      if (user) {
-        var email = (user.primaryEmailAddress && user.primaryEmailAddress.emailAddress) || 'Usuário';
-        var displayName = email.length > 20 ? email.substring(0, 18) + '…' : email;
-        area.innerHTML =
-          '<span class="auth-email" title="' + email + '">' + displayName + '</span>' +
-          '<button type="button" class="auth-btn auth-btn--logout" id="auth-logout-btn">Sair</button>';
-        document.getElementById('auth-logout-btn').addEventListener('click', function() {
-          window.Clerk.signOut().then(function() { window.location.reload(); });
-        });
-      } else {
-        area.innerHTML =
-          '<button type="button" class="auth-btn auth-btn--login" id="auth-login-btn">Entrar</button>';
-        document.getElementById('auth-login-btn').addEventListener('click', function() {
-          window.Clerk.openSignIn();
-        });
-      }
-    }
+    // O renderAuthArea() agora é gerenciado pelo auth.js globalmente.
+    // Isso garante consistência com o index.html e evita código duplicado.
 
     // ============================================================
     // Tratamento de clique no plano
@@ -211,8 +188,14 @@
         card.setAttribute('aria-checked', 'true');
       }
 
+      // Verificar se o sistema de auth carregou
+      if (!window.Clerk) {
+        showError('O sistema de autenticação ainda está carregando. Por favor, aguarde alguns segundos.');
+        return;
+      }
+
       // Verificar se está logado
-      if (!window.Clerk || !window.Clerk.user) {
+      if (!window.Clerk.user) {
         // Abre tela de login do Clerk; após login, tenta novamente
         window.Clerk.openSignIn({
           afterSignInUrl: window.location.href,
@@ -305,22 +288,9 @@
     // ============================================================
     // Inicialização
     // ============================================================
-    window.addEventListener('load', async function() {
+    window.addEventListener('load', function() {
       handleSuccess();
-
-      if (window.Clerk) {
-        try {
-          await window.Clerk.load();
-          renderCheckoutAuthArea();
-
-          // Listener para atualizações de auth
-          window.Clerk.addListener(function() {
-            renderCheckoutAuthArea();
-          });
-        } catch (err) {
-          console.error('[checkout] Erro ao carregar Clerk:', err);
-        }
-      }
+      // O Clerk é inicializado pelo auth.js e clerk-loader.js automaticamante
     });
   </script>
 

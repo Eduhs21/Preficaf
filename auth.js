@@ -240,14 +240,27 @@ document.addEventListener('DOMContentLoaded', function() {
 // CLERK INITIALIZATION
 // ================================================================
 let _clerkInitStarted = false;
+let _clerkLoadFailed = false;
 
+/**
+ * Inicializa o Clerk e configura listeners
+ */
 async function initClerkOnce() {
-  if (_clerkInitStarted) return;
+  if (_clerkInitStarted || _clerkLoadFailed) return;
   if (!window.Clerk) return;
+
   _clerkInitStarted = true;
+  console.log('[auth] Inicializando Clerk...');
 
   try {
-    await window.Clerk.load();
+    // Carrega o SDK
+    await window.Clerk.load({
+      appearance: {
+        variables: { colorPrimary: '#005a32' } // Verde PrecificaFácil
+      }
+    });
+
+    console.log('[auth] Clerk carregado com sucesso.');
 
     // Renderizar UI de auth no header
     renderAuthArea();
@@ -258,18 +271,28 @@ async function initClerkOnce() {
     }
 
     // Listener para mudanças de estado de autenticação
-    window.Clerk.addListener(function() {
+    window.Clerk.addListener(function(state) {
       renderAuthArea();
-      if (window.Clerk.user) {
+      if (state.user) {
         refreshProStatus();
       } else {
         clearSubscriptionCache();
         _isProCached = false;
       }
     });
+
   } catch (err) {
     _clerkInitStarted = false;
-    console.error('[auth] Erro ao inicializar Clerk:', err);
+    _clerkLoadFailed = true;
+    console.error('[auth] Erro crítico ao inicializar Clerk:', err);
+    
+    // Feedback visual opcional se houver área de login travada
+    const loginBtn = document.getElementById('auth-login-btn');
+    if (loginBtn) {
+      loginBtn.textContent = 'Erro ao carregar';
+      loginBtn.style.opacity = '0.5';
+      loginBtn.title = 'Não foi possível carregar o sistema de autenticação. Verifique sua conexão.';
+    }
   }
 }
 
@@ -279,7 +302,13 @@ window.__initClerk = function () {
 };
 
 // Fallback: caso o Clerk demore para aparecer (script async / rede lenta)
-window.addEventListener('load', function () {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupClerkRetry);
+} else {
+  setupClerkRetry();
+}
+
+function setupClerkRetry() {
   initClerkOnce();
 
   let tries = 0;
@@ -287,6 +316,11 @@ window.addEventListener('load', function () {
   const timer = setInterval(function () {
     tries += 1;
     initClerkOnce();
-    if (_clerkInitStarted || tries >= maxTries) clearInterval(timer);
+    if (_clerkInitStarted || _clerkLoadFailed || tries >= maxTries) {
+      clearInterval(timer);
+      if (!_clerkInitStarted && !_clerkLoadFailed) {
+        console.warn('[auth] Clerk não carregou após 10 segundos.');
+      }
+    }
   }, 250);
-});
+}
