@@ -256,7 +256,21 @@ async function initClerkOnce() {
     // Carrega o SDK
     await window.Clerk.load({
       appearance: {
-        variables: { colorPrimary: '#005a32' } // Verde PrecificaFácil
+        variables: { 
+          colorPrimary: '#005a32', // Verde PrecificaFácil
+          colorTextOnPrimaryBackground: '#ffffff'
+        },
+        layout: {
+          socialButtonsVariant: 'iconButton',
+          showOptionalFields: false // Evita ruído no formulário
+        }
+      },
+      localization: {
+        signUp: {
+          start: {
+            title: 'Criar conta no PrecificaFácil'
+          }
+        }
       }
     });
 
